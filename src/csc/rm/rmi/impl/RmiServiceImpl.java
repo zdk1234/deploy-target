@@ -61,6 +61,31 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
                 }
             }
         }
+
+        List<FileBase> diffFileList = fileModel.getDiffFileList();
+        // 新建文件
+        for (FileBase fileBase : diffFileList) {
+            File file = new File(fileBase.getFilePath());
+            if (!fileBase.isDirectory()) {
+                FileOutputStream fos = null;
+                try {
+                    String absolutePath = file.getAbsolutePath();
+                    byte[] bytes = dataMap.get(absolutePath);
+                    fos = new FileOutputStream(file);
+                    fos.write(bytes);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    if (fos != null) {
+                        try {
+                            fos.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
         return 0;
     }
 }
