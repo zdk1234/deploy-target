@@ -1,5 +1,6 @@
 package csc.rm.rmi.impl;
 
+import csc.rm.bean.FileBase;
 import csc.rm.bean.FileModel;
 import csc.rm.rmi.RmiFileTransfer;
 import csc.rm.rmi.RmiService;
@@ -27,17 +28,17 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         Map<String, byte[]> dataMap = rmiFileTransfer.getDataMap();
 
         // 删除文件
-        List<String> deletedFileList = fileModel.getDeletedFileList();
-        deletedFileList.stream().map(File::new).forEach(FileUtil::deleteFile);
+        List<FileBase> deletedFileList = fileModel.getDeletedFileList();
+        deletedFileList.stream().map(fileBase -> new File(fileBase.getFilePath())).forEach(FileUtil::deleteFile);
 
         // 新增文件
-        List<String> addedFileList = fileModel.getAddedFileList();
+        List<FileBase> addedFileList = fileModel.getAddedFileList();
         // 新建文件夹
-        addedFileList.stream().map(File::new).filter(File::isDirectory).forEach(File::mkdir);
+        addedFileList.stream().filter(FileBase::isDirectory).map(fileBase -> new File(fileBase.getFilePath())).forEach(File::mkdir);
         // 新建文件
-        for (String filePath : addedFileList) {
-            File file = new File(filePath);
-            if (!file.isDirectory()) {
+        for (FileBase fileBase : addedFileList) {
+            File file = new File(fileBase.getFilePath());
+            if (!fileBase.isDirectory()) {
                 FileOutputStream fos = null;
                 BufferedOutputStream bos = null;
                 try {
