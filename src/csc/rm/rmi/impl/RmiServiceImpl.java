@@ -6,7 +6,10 @@ import csc.rm.rmi.RmiFileTransfer;
 import csc.rm.rmi.RmiService;
 import csc.rm.util.FileUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
@@ -40,26 +43,17 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
             File file = new File(fileBase.getFilePath());
             if (!fileBase.isDirectory()) {
                 FileOutputStream fos = null;
-                BufferedOutputStream bos = null;
                 try {
                     String absolutePath = file.getAbsolutePath();
                     byte[] bytes = dataMap.get(absolutePath);
                     fos = new FileOutputStream(file);
-                    bos = new BufferedOutputStream(fos);
-                    bos.write(bytes);
+                    fos.write(bytes);
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
                     if (fos != null) {
                         try {
                             fos.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (bos != null) {
-                        try {
-                            bos.close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
