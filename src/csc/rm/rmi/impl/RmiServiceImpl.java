@@ -8,7 +8,6 @@ import csc.rm.util.FileUtil;
 import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -28,15 +27,16 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         Map<String, byte[]> dataMap = rmiFileTransfer.getDataMap();
 
         // 删除文件
-        List<File> deletedFileList = fileModel.getDeletedFileList();
-        deletedFileList.forEach(FileUtil::deleteFile);
+        List<String> deletedFileList = fileModel.getDeletedFileList();
+        deletedFileList.stream().map(File::new).forEach(FileUtil::deleteFile);
 
         // 新增文件
-        List<File> addedFileList = fileModel.getAddedFileList();
+        List<String> addedFileList = fileModel.getAddedFileList();
         // 新建文件夹
-        addedFileList.stream().filter(File::isDirectory).forEach(File::mkdir);
+        addedFileList.stream().map(File::new).filter(File::isDirectory).forEach(File::mkdir);
         // 新建文件
-        for (File file : addedFileList) {
+        for (String filePath : addedFileList) {
+            File file = new File(filePath);
             if (!file.isDirectory()) {
                 FileOutputStream fos = null;
                 BufferedOutputStream bos = null;
