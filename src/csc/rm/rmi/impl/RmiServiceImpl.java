@@ -38,33 +38,11 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         List<FileBase> addedFileList = fileModel.getAddedFileList();
         // 新建文件夹
         addedFileList.stream().filter(FileBase::isDirectory).map(fileBase -> new File(fileBase.getFilePath())).forEach(File::mkdir);
-        // 新建文件
-        for (FileBase fileBase : addedFileList) {
-            File file = new File(fileBase.getFilePath());
-            if (!fileBase.isDirectory()) {
-                FileOutputStream fos = null;
-                try {
-                    String absolutePath = file.getAbsolutePath();
-                    byte[] bytes = dataMap.get(absolutePath);
-                    fos = new FileOutputStream(file);
-                    fos.write(bytes);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                } finally {
-                    if (fos != null) {
-                        try {
-                            fos.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            }
-        }
 
         List<FileBase> diffFileList = fileModel.getDiffFileList();
-        // 新建文件
-        for (FileBase fileBase : diffFileList) {
+        addedFileList.addAll(diffFileList);
+        // 同步新增文件并覆盖修改文件
+        for (FileBase fileBase : addedFileList) {
             File file = new File(fileBase.getFilePath());
             if (!fileBase.isDirectory()) {
                 FileOutputStream fos = null;
