@@ -22,6 +22,8 @@ import java.util.Map;
  */
 public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, Serializable {
 
+    private final static String BAST_TARGET_PATH = PropertiesUtil.getValue("monitor.targetPath");
+
     public RmiServiceImpl() throws RemoteException {
         super();
     }
@@ -37,7 +39,7 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         List<FileBase> deletedFileList = fileModel.getDeletedFileList();
         for (FileBase base : deletedFileList) {
             String sourceFilePath = base.getFilePath();
-            String targetFilePath = PropertiesUtil.getValue("monitor.targetPath") + sourceFilePath.replace(sourcePath, "");
+            String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
             File targetFile = new File(targetFilePath);
             FileUtil.deleteFile(targetFile);
         }
@@ -48,7 +50,7 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         for (FileBase base : addedFileList) {
             if (base.isDirectory()) {
                 String sourceFilePath = base.getFilePath();
-                String targetFilePath = PropertiesUtil.getValue("monitor.targetPath") + sourceFilePath.replace(sourcePath, "");
+                String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
                 File targetFile = new File(targetFilePath);
                 targetFile.mkdir();
             }
@@ -62,7 +64,7 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
                 FileOutputStream fos = null;
                 try {
                     String sourceFilePath = fileBase.getFilePath();
-                    String targetFilePath = PropertiesUtil.getValue("monitor.targetPath") + sourceFilePath.replace(sourcePath, "");
+                    String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
                     File targetFile = new File(targetFilePath);
                     byte[] bytes = dataMap.get(sourceFilePath);
                     fos = new FileOutputStream(targetFile);
