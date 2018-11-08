@@ -6,10 +6,9 @@ import csc.rm.rmi.RmiFileTransfer;
 import csc.rm.rmi.RmiService;
 import csc.rm.util.FileUtil;
 import csc.rm.util.PropertiesUtil;
+import csc.rm.util.RemoteUploadUtil;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -61,17 +60,22 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         // 同步新增文件并覆盖修改文件
         for (FileBase fileBase : addedFileList) {
             if (!fileBase.isDirectory()) {
-                FileOutputStream fos = null;
+                //FileOutputStream fos = null;
                 try {
                     String sourceFilePath = fileBase.getFilePath();
                     String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
-                    File targetFile = new File(targetFilePath);
+
+                    targetFilePath = targetFilePath.replace("\\","/");
+
+                    RemoteUploadUtil.smbPut(targetFilePath, dataMap.get(sourceFilePath));
+
+                    /*File targetFile = new File(targetFilePath);
                     byte[] bytes = dataMap.get(sourceFilePath);
                     fos = new FileOutputStream(targetFile);
-                    fos.write(bytes);
+                    fos.write(bytes);*/
                 } catch (Exception e) {
                     e.printStackTrace();
-                } finally {
+                }/* finally {
                     if (fos != null) {
                         try {
                             fos.close();
@@ -79,7 +83,7 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
                             e.printStackTrace();
                         }
                     }
-                }
+                }*/
             }
         }
         return 0;

@@ -16,7 +16,7 @@ public class RemoteUploadUtil {
     /**
      * @param bytes
      */
-    public void smbPut(String remoteFilePath, byte[] bytes) throws IOException {
+    public static void smbPut(String remoteFilePath, byte[] bytes) throws IOException {
         OutputStream out = null;
         try {
             SmbFile remoteFile = new SmbFile(remoteFilePath);
