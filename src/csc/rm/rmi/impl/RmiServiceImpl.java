@@ -5,6 +5,7 @@ import csc.rm.bean.FileModel;
 import csc.rm.rmi.RmiFileTransfer;
 import csc.rm.rmi.RmiService;
 import csc.rm.util.FileUtil;
+import csc.rm.util.PropertiesUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,12 +28,19 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
 
     @Override
     public int getRmiFileTransfer(RmiFileTransfer rmiFileTransfer) throws RemoteException {
+        String sourcePath = rmiFileTransfer.getSourcePath();
+        sourcePath = sourcePath.replace("//", "\\");
         FileModel fileModel = rmiFileTransfer.getFileModel();
         Map<String, byte[]> dataMap = rmiFileTransfer.getDataMap();
 
         // 删除文件
         List<FileBase> deletedFileList = fileModel.getDeletedFileList();
-        deletedFileList.stream().map(fileBase -> new File(fileBase.getFilePath())).forEach(FileUtil::deleteFile);
+        for (FileBase base : deletedFileList) {
+            String sourceFilePath = base.getFilePath();
+            String targetFilePath = PropertiesUtil.getValue("monitor.targetPath") + sourceFilePath.replace(sourcePath, "");
+            File targetFile = new File(targetFilePath);
+            FileUtil.deleteFile(targetFile);
+        }
 
         // 新增文件
         List<FileBase> addedFileList = fileModel.getAddedFileList();
@@ -43,13 +51,14 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         addedFileList.addAll(diffFileList);
         // 同步新增文件并覆盖修改文件
         for (FileBase fileBase : addedFileList) {
-            File file = new File(fileBase.getFilePath());
             if (!fileBase.isDirectory()) {
                 FileOutputStream fos = null;
                 try {
-                    String absolutePath = file.getAbsolutePath();
-                    byte[] bytes = dataMap.get(absolutePath);
-                    fos = new FileOutputStream(file);
+                    String sourceFilePath = fileBase.getFilePath();
+                    String targetFilePath = PropertiesUtil.getValue("monitor.targetPath") + sourceFilePath.replace(sourcePath, "");
+                    File targetFile = new File(targetFilePath);
+                    byte[] bytes = dataMap.get(sourceFilePath);
+                    fos = new FileOutputStream(targetFile);
                     fos.write(bytes);
                 } catch (Exception e) {
                     e.printStackTrace();
