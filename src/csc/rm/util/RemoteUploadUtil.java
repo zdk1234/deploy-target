@@ -32,4 +32,20 @@ public class RemoteUploadUtil {
             }
         }
     }
+
+    /**
+     * @param smbFile
+     */
+    public static void smbRemove(SmbFile smbFile) throws IOException {
+        if (smbFile != null && smbFile.exists()) {
+            if (smbFile.isFile()) {
+                smbFile.delete();
+            } else {
+                for (SmbFile file : smbFile.listFiles()) {
+                    smbRemove(file);
+                }
+                smbFile.delete();
+            }
+        }
+    }
 }

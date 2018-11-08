@@ -4,11 +4,11 @@ import csc.rm.bean.FileBase;
 import csc.rm.bean.FileModel;
 import csc.rm.rmi.RmiFileTransfer;
 import csc.rm.rmi.RmiService;
-import csc.rm.util.FileUtil;
 import csc.rm.util.PropertiesUtil;
 import csc.rm.util.RemoteUploadUtil;
+import jcifs.smb.SmbFile;
 
-import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
@@ -37,10 +37,18 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         // 删除文件
         List<FileBase> deletedFileList = fileModel.getDeletedFileList();
         for (FileBase base : deletedFileList) {
-            String sourceFilePath = base.getFilePath();
-            String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
-            File targetFile = new File(targetFilePath);
-            FileUtil.deleteFile(targetFile);
+            try {
+                String sourceFilePath = base.getFilePath();
+                String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
+                targetFilePath = targetFilePath.replace("\\", "/");
+                SmbFile remoteFile = new SmbFile(targetFilePath);
+                if (remoteFile.isDirectory()) {
+                    remoteFile = new SmbFile(targetFilePath + "/");
+                }
+                RemoteUploadUtil.smbRemove(remoteFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         // 新增文件
@@ -48,10 +56,15 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         // 新建文件夹
         for (FileBase base : addedFileList) {
             if (base.isDirectory()) {
-                String sourceFilePath = base.getFilePath();
-                String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
-                File targetFile = new File(targetFilePath);
-                targetFile.mkdir();
+                try {
+                    String sourceFilePath = base.getFilePath();
+                    String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
+                    targetFilePath = targetFilePath.replace("\\", "/");
+                    SmbFile remoteFile = new SmbFile(targetFilePath);
+                    remoteFile.mkdir();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -65,7 +78,7 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
                     String sourceFilePath = fileBase.getFilePath();
                     String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
 
-                    targetFilePath = targetFilePath.replace("\\","/");
+                    targetFilePath = targetFilePath.replace("\\", "/");
 
                     RemoteUploadUtil.smbPut(targetFilePath, dataMap.get(sourceFilePath));
 
