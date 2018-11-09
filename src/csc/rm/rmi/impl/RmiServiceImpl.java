@@ -4,6 +4,7 @@ import csc.rm.bean.FileBase;
 import csc.rm.bean.FileModel;
 import csc.rm.rmi.RmiFileTransfer;
 import csc.rm.rmi.RmiService;
+import csc.rm.util.LoggerUtil;
 import csc.rm.util.PropertiesUtil;
 import csc.rm.util.RemoteUploadUtil;
 import jcifs.smb.SmbFile;
@@ -21,6 +22,8 @@ import java.util.Map;
  */
 public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, Serializable {
 
+    private static final LoggerUtil LOGGER = new LoggerUtil(RmiServiceImpl.class);
+
     private final static String BAST_TARGET_PATH = PropertiesUtil.getValue("monitor.targetPath");
 
     public RmiServiceImpl() throws RemoteException {
@@ -34,8 +37,26 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
         FileModel fileModel = rmiFileTransfer.getFileModel();
         Map<String, byte[]> dataMap = rmiFileTransfer.getDataMap();
 
-        // 删除文件
+        List<FileBase> addedFileList = fileModel.getAddedFileList();
+        List<FileBase> diffFileList = fileModel.getDiffFileList();
         List<FileBase> deletedFileList = fileModel.getDeletedFileList();
+
+        final StringBuilder builder = new StringBuilder();
+        if (!addedFileList.isEmpty()) {
+            builder.append("\n新增:\n");
+            addedFileList.forEach(fileBase -> builder.append("\t").append(fileBase.toString()).append("\n"));
+        }
+        if (diffFileList.size() != 0) {
+            builder.append("\n修改:\n");
+            diffFileList.forEach(fileBase -> builder.append("\t").append(fileBase.toString()).append("\n"));
+        }
+        if (deletedFileList.size() != 0) {
+            builder.append("\n删除:\n");
+            deletedFileList.forEach(fileBase -> builder.append("\t").append(fileBase.toString()).append("\n"));
+        }
+        LOGGER.info(builder.toString());
+
+        // 删除文件
         for (FileBase base : deletedFileList) {
             try {
                 String sourceFilePath = base.getFilePath();
@@ -51,8 +72,6 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
             }
         }
 
-        // 新增文件
-        List<FileBase> addedFileList = fileModel.getAddedFileList();
         // 新建文件夹
         for (FileBase base : addedFileList) {
             if (base.isDirectory()) {
@@ -61,14 +80,16 @@ public class RmiServiceImpl extends UnicastRemoteObject implements RmiService, S
                     String targetFilePath = BAST_TARGET_PATH + sourceFilePath.replace(sourcePath, "");
                     targetFilePath = targetFilePath.replace("\\", "/");
                     SmbFile remoteFile = new SmbFile(targetFilePath);
-                    remoteFile.mkdir();
+
+                    if (!remoteFile.exists()) {
+                        remoteFile.mkdir();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
         }
 
-        List<FileBase> diffFileList = fileModel.getDiffFileList();
         addedFileList.addAll(diffFileList);
         // 同步新增文件并覆盖修改文件
         for (FileBase fileBase : addedFileList) {

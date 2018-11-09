@@ -1,5 +1,6 @@
 package csc.rm.rmi;
 
+import csc.rm.util.LoggerUtil;
 import csc.rm.util.PropertiesUtil;
 
 import java.rmi.Remote;
@@ -12,6 +13,8 @@ import java.util.Objects;
  * Created by zdk on 2018/11/7.
  */
 public class RmiServiceConfig {
+
+    private static final LoggerUtil LOGGER = new LoggerUtil(RmiServiceConfig.class);
 
     public static void init() throws Exception {
         int port = 1099;
@@ -28,5 +31,7 @@ public class RmiServiceConfig {
         Class<?> clz = Class.forName(PropertiesUtil.getValue("rmi.excuteClass"));
         Remote remote = (Remote) clz.getDeclaredConstructor().newInstance();
         registry.rebind(context, remote);
+
+        LOGGER.info("<初始化> 启动RMI服务 context:" + context + " | port:" + port + " 执行类:" + clz.getName());
     }
 }
