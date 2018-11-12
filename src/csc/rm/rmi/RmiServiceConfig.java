@@ -17,11 +17,11 @@ public class RmiServiceConfig {
     private static final LoggerUtil LOGGER = new LoggerUtil(RmiServiceConfig.class);
 
     public static void init() throws Exception {
-        int port = 1099;
+        int port;
         try {
             port = Integer.valueOf(Objects.requireNonNull(PropertiesUtil.getValue("rmi.port")));
         } catch (Exception e) {
-
+            port = 1099;
         }
         Registry registry = LocateRegistry.createRegistry(port);
         String context = PropertiesUtil.getValue("rmi.context");
